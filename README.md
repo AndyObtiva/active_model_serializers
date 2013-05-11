@@ -644,3 +644,40 @@ Assuming that the `current_admin` method needs to make a query in the database
 for the current user, the advantage of this approach is that, by setting
 `serialization_scope` to `nil`, the `index` action no longer will need to make
 that query, only the `show` action will.
+
+
+## Serialization of a hash containing a nested (embedded) model
+
+There is a mixin that overrides ActiveRecord::Base#to_json and #as_json to enable
+serialization via ActiveModel Serializers. We do not recommend that you use ActiveModel
+Serializers in this way in general, but there is one exception. That is when a legacy
+app's controller actions for example are rendering json for a model nested within a hash
+(e.g. {param1 => value1, param2 => model}), which will not trigger ActiveModel Serializers
+for the nested model by default, yet instead rely on normal to_json serialization.
+To get around this problem, you can require the file 'active_record/serializer_override'
+and include the module ActiveRecord::SerializerOverride, which will override the to_json
+and as_json methods of the model to rely on ActiveModel Serializers instead.
+
+Example:
+
+In controller actions of a legacy app, there is a lot of this:
+
+```ruby
+render :json => {param1 => value1, params2 => value2, data => model}
+```
+
+Add an initializer file: "config/initializers/active_model_serializers.rb"
+
+with this content:
+
+```ruby
+require 'active_record/serializer_override'
+ActiveRecord::Base.send(:include, ActiveRecord::SerializerOverride)
+```
+
+or to override to_json and as_json for one model class only:
+
+```ruby
+require 'active_record/serializer_override'
+ActiveRecord::Base.send(:include, ActiveRecordModel)
+```

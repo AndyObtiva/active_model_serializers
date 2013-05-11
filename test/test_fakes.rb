@@ -50,7 +50,7 @@ class UserSerializer < ActiveModel::Serializer
   attributes :first_name, :last_name
 
   def serializable_hash
-    attributes.merge(:ok => true).merge(options[:scope])
+    attributes.merge(:ok => true).merge(options[:scope] || {})
   end
 end
 
